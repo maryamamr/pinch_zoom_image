@@ -3,29 +3,29 @@ import 'package:flutter/services.dart';
 import 'package:pinch_zoom_image/src/pinch_zoom_overlay_image.dart';
 
 class PinchZoomImage extends StatefulWidget {
-  final Widget image;
-  final Color zoomedBackgroundColor;
-  final bool hideStatusBarWhileZooming;
-  final Function onZoomStart;
-  final Function onZoomEnd;
-
-  PinchZoomImage({
-    @required this.image,
+  const PinchZoomImage({
+    super.key,
+    required this.image,
     this.zoomedBackgroundColor = Colors.transparent,
     this.hideStatusBarWhileZooming = false,
     this.onZoomStart,
     this.onZoomEnd,
   });
+  final Widget image;
+  final Color zoomedBackgroundColor;
+  final bool hideStatusBarWhileZooming;
+  final Function()? onZoomStart;
+  final Function()? onZoomEnd;
 
   @override
-  _PinchZoomImageState createState() => _PinchZoomImageState();
+  PinchZoomImageState createState() => PinchZoomImageState();
 }
 
-class _PinchZoomImageState extends State<PinchZoomImage> {
-  static const channel = const MethodChannel('pinch_zoom_image');
-  OverlayEntry overlayEntry;
-  Offset scaleStartPosition;
-  Offset origin;
+class PinchZoomImageState extends State<PinchZoomImage> {
+  static const MethodChannel channel = MethodChannel('pinch_zoom_image');
+  OverlayEntry? overlayEntry;
+  Offset? scaleStartPosition;
+  Offset? origin;
   int numPointers = 0;
   bool zooming = false;
   bool reversing = false;
@@ -41,7 +41,6 @@ class _PinchZoomImageState extends State<PinchZoomImage> {
         onScaleUpdate: _handleScaleUpdate,
         onScaleEnd: _handleScaleEnd,
         child: Stack(
-          overflow: Overflow.clip,
           children: <Widget>[
             Opacity(
               opacity: zooming ? 0.0 : 1.0,
@@ -64,17 +63,23 @@ class _PinchZoomImageState extends State<PinchZoomImage> {
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
-    if (overlayEntry != null || reversing || numPointers < 2) return;
+    if (overlayEntry != null || reversing || numPointers < 2) {
+      return;
+    }
     setState(() {
       zooming = true;
     });
-    if (widget.hideStatusBarWhileZooming) channel.invokeMethod('hideStatusBar');
-    if (widget.onZoomStart != null) widget.onZoomStart();
-    OverlayState overlayState = Overlay.of(context);
-    double width = context.size.width;
-    double height = context.size.height;
-    origin = (context.findRenderObject() as RenderBox)
-        .localToGlobal(Offset(0.0, 0.0));
+    if (widget.hideStatusBarWhileZooming) {
+      channel.invokeMethod('hideStatusBar');
+    }
+    if (widget.onZoomStart != null) {
+      widget.onZoomStart!();
+    }
+    final OverlayState overlayState = Overlay.of(context);
+    final double width = context.size!.width;
+    final double height = context.size!.height;
+    origin =
+        (context.findRenderObject()! as RenderBox).localToGlobal(Offset.zero);
     scaleStartPosition = details.focalPoint;
 
     overlayEntry = OverlayEntry(
@@ -90,23 +95,32 @@ class _PinchZoomImageState extends State<PinchZoomImage> {
       },
     );
 
-    overlayState.insert(overlayEntry);
+    overlayState.insert(overlayEntry!);
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
-    if (reversing || numPointers < 2) return;
-    overlayKey?.currentState
-        ?.updatePosition(origin - (scaleStartPosition - details.focalPoint));
-    if (details.scale >= 1.0)
-      overlayKey?.currentState?.updateScale(details.scale);
+    if (reversing || numPointers < 2) {
+      return;
+    }
+    overlayKey.currentState
+        ?.updatePosition(origin! - (scaleStartPosition! - details.focalPoint));
+    if (details.scale >= 1.0) {
+      overlayKey.currentState?.updateScale(details.scale);
+    }
   }
 
   void _handleScaleEnd(ScaleEndDetails details) async {
-    if (reversing || !zooming) return;
+    if (reversing || !zooming) {
+      return;
+    }
     reversing = true;
-    if (widget.hideStatusBarWhileZooming) channel.invokeMethod('showStatusBar');
-    if (widget.onZoomEnd != null) widget.onZoomEnd();
-    await overlayKey?.currentState?.reverse();
+    if (widget.hideStatusBarWhileZooming) {
+      channel.invokeMethod('showStatusBar');
+    }
+    if (widget.onZoomEnd != null) {
+      widget.onZoomEnd!();
+    }
+    await overlayKey.currentState?.reverse();
     overlayEntry?.remove();
     overlayEntry = null;
     origin = null;

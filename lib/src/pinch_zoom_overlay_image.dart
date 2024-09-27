@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'dart:ui' show lerpDouble;
 
 class PinchZoomOverlayImage extends StatefulWidget {
-  final Key key;
-  final Offset origin;
+  const PinchZoomOverlayImage({
+    this.key,
+    required this.origin,
+    required this.width,
+    required this.height,
+    required this.image,
+  }) : super(key: key);
+  @override
+  final Key? key;
+  final Offset? origin;
   final double width;
   final double height;
-  final Widget image;
-
-  PinchZoomOverlayImage({
-    this.key,
-    @required this.origin,
-    @required this.width,
-    @required this.height,
-    @required this.image,
-  }) : super(key: key);
+  final Widget? image;
 
   @override
   PinchZoomOverlayImageState createState() => PinchZoomOverlayImageState();
@@ -22,8 +22,8 @@ class PinchZoomOverlayImage extends StatefulWidget {
 
 class PinchZoomOverlayImageState extends State<PinchZoomOverlayImage>
     with TickerProviderStateMixin {
-  AnimationController reverseAnimationController;
-  Offset position;
+  AnimationController? reverseAnimationController;
+  Offset? position;
   double scale = 1.0;
 
   @override
@@ -34,7 +34,7 @@ class PinchZoomOverlayImageState extends State<PinchZoomOverlayImage>
 
   @override
   void dispose() {
-    reverseAnimationController.dispose();
+    reverseAnimationController?.dispose();
     super.dispose();
   }
 
@@ -51,8 +51,8 @@ class PinchZoomOverlayImageState extends State<PinchZoomOverlayImage>
           ),
         ),
         Positioned(
-          top: position.dy,
-          left: position.dx,
+          top: position?.dy,
+          left: position?.dx,
           width: widget.width,
           height: widget.height,
           child: Transform.scale(
@@ -77,29 +77,29 @@ class PinchZoomOverlayImageState extends State<PinchZoomOverlayImage>
   }
 
   TickerFuture reverse() {
-    Offset origin = widget.origin;
-    Offset reverseStartPosition = position;
-    double reverseStartScale = scale;
+    final Offset? origin = widget.origin;
+    final Offset? reverseStartPosition = position;
+    final double reverseStartScale = scale;
 
     reverseAnimationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 200),
     )..addListener(() {
         setState(() {
           position = Offset.lerp(
             reverseStartPosition,
             origin,
-            Curves.easeInOut.transform(reverseAnimationController.value),
+            Curves.easeInOut.transform(reverseAnimationController!.value),
           );
 
           scale = lerpDouble(
             reverseStartScale,
             1.0,
-            Curves.easeInOut.transform(reverseAnimationController.value),
-          );
+            Curves.easeInOut.transform(reverseAnimationController!.value),
+          )!;
         });
       });
 
-    return reverseAnimationController.forward(from: 0.0);
+    return reverseAnimationController!.forward(from: 0.0);
   }
 }
